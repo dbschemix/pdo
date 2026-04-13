@@ -14,7 +14,6 @@ use dbschemix\pdo\Type;
 
 final class StatementMysqlTest extends TestCase
 {
-
     private TransactionInterface $transaction;
 
     #[Override]
