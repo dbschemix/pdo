@@ -1,0 +1,45 @@
+name: Published
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - "8.4"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: pdo pcov
+          coverage: pcov
+
+      - name: Install composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: "highest"
+          composer-options: --optimize-autoloader
+
+      - name: Psalm Type Coverage
+        run: vendor/bin/psalm --stats --shepherd
+
+      - name: Generate Coverage
+        run: vendor/bin/phpunit --configuration phpunit.xml.dist \
+          --coverage-xml=build/coverage-xml \
+          --coverage-clover=build/clover.xml \
+          --log-junit=build/phpunit.junit.xml
+
+      - name: Infection Mutation Testing
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+        run: vendor/bin/infection --coverage=build --threads=max --logger-github --no-progress --skip-initial-tests
