@@ -101,7 +101,7 @@ final class Driver implements DriverInterface
          * @note если вдруг экземпляр класса Migrator будет использоваться как сервис, то переиспользуем коннект.
          * Но с ограничением по времени, долго держать в памяти не будем.
          */
-        if ($this->connectionInstance === null || $this->connectionTimer < time()) {
+        if (!$this->connectionInstance instanceof Connection || $this->connectionTimer < time()) {
             $this->connectionTimer = time() + $timeout;
             try {
                 return $this->connectionInstance = new Connection(

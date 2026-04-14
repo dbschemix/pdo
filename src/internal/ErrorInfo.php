@@ -36,6 +36,6 @@ final readonly class ErrorInfo implements Stringable
     #[\Override]
     public function __toString(): string
     {
-        return $this->getMessage();
+        return $this->message;
     }
 }

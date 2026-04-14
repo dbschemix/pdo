@@ -7,6 +7,7 @@ namespace dbschemix\pdo\tests\workflow;
 use Override;
 use Throwable;
 use PDO;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use dbschemix\core\connection\TransactionInterface;
 use dbschemix\pdo\internal\Connection;
@@ -55,16 +56,28 @@ final class StatementMysqlTest extends TestCase
     }
 
     /**
+     * @return iterable<non-empty-string[]>
+     */
+    public static function additionSchemaQuery(): iterable
+    {
+        yield ['CREATE TABLE IF NOT EXISTS test (name TEXT PRIMARY KEY, version INTEGER DEFAULT 0, atime TEXT)'];
+        yield ['ALTER TABLE migration ADD COLUMN test TEXT DEFAULT NULL'];
+        yield ['CREATE UNIQUE INDEX IF NOT EXISTS `UI_migration_name` ON migration (name)'];
+        yield ['DROP INDEX IF EXISTS `UI_migration_name`'];
+        yield ['DROP TABLE IF EXISTS test'];
+    }
+
+    /**
+     * @param non-empty-string $query
      * @throws Throwable
      */
-    public function testExecNotActiveTransaction(): void
+    #[DataProvider('additionSchemaQuery')]
+    public function testExecNotActiveTransaction(string $query): void
     {
         // default: false
         self::assertFalse($this->transaction->isActive());
 
-        $this->transaction->exec(
-            "CREATE TABLE test (name TEXT PRIMARY KEY, version INTEGER DEFAULT 0, atime TEXT)"
-        );
+        $this->transaction->exec($query);
 
         // statement CREATE TABLE: false
         self::assertFalse($this->transaction->isActive());
