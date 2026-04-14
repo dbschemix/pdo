@@ -3,11 +3,19 @@
 ### Static analysis
 
 To run static analysis:
-- psalm
-- phpstan
+- [psalm](https://psalm.dev/)
+- [phpstan](https://phpstan.org/)
 
 ```shell
 make check
+```
+
+To fix code style:
+- [phpcs](https://github.com/squizlabs/PHP_CodeSniffer)
+- [rector](https://getrector.com/)
+
+```shell
+make fix
 ```
 
 ### Testing
