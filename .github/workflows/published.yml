@@ -34,12 +34,9 @@ jobs:
         run: vendor/bin/psalm --stats --shepherd
 
       - name: Generate Coverage
-        run: vendor/bin/phpunit --configuration phpunit.xml.dist \
-          --coverage-xml=build/coverage-xml \
-          --coverage-clover=build/clover.xml \
-          --log-junit=build/phpunit.junit.xml
+        run: vendor/bin/testo --coverage --log-junit=runtime/coverage/phpunit.junit.xml
 
       - name: Infection Mutation Testing
         env:
           STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
-        run: vendor/bin/infection --coverage=build --threads=max --logger-github --no-progress --skip-initial-tests
+        run: vendor/bin/infection --coverage=runtime/coverage --threads=max --logger-github --no-progress --skip-initial-tests

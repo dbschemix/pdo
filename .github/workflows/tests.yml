@@ -36,6 +36,6 @@ jobs:
           composer-options: "--optimize-autoloader"
 
       - name: PHPUnit
-        run: vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover ./coverage.xml
+        run: vendor/bin/testo
         env:
           XDEBUG_MODE: coverage

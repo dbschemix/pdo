@@ -1,14 +1,12 @@
 {
+  "$schema": "vendor/infection/infection/resources/schema.json",
   "source": {
-    "directories": [
-      "src"
-    ]
+    "directories": ["src"]
   },
+  "testFramework": "testo",
   "threads": "max",
+  "tmpDir": "runtime",
   "minCoveredMsi": 99,
-  "phpUnit": {
-    "configDir": "."
-  },
   "mutators": {
     "@default": true
   },

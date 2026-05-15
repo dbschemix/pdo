@@ -4,21 +4,23 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo\tests\workflow;
 
-use Override;
 use Throwable;
 use PDO;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
+use Testo\Assert;
+use Testo\Data\DataProvider;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 use dbschemix\core\connection\TransactionInterface;
 use dbschemix\pdo\internal\Connection;
 use dbschemix\pdo\Type;
 
-final class StatementMysqlTest extends TestCase
+#[Test]
+final class StatementMysqlTest
 {
     private TransactionInterface $transaction;
 
-    #[Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function init(): void
     {
         $pdo = new PDO(dsn: 'sqlite::memory:');
         $pdo->exec(
@@ -31,40 +33,69 @@ final class StatementMysqlTest extends TestCase
     /**
      * @throws Throwable
      */
-    public function testExecActiveTransaction(): void
+    public function execActiveTransaction(): void
     {
         // default: false
-        self::assertFalse($this->transaction->isActive());
+        Assert::false($this->transaction->isActive());
 
         $this->transaction->exec(
             "INSERT INTO migration (name, version, atime) VALUES ('v1', 1, '2026-01-01 00:00:00')"
         );
 
         // statement INSERT: true
-        self::assertTrue($this->transaction->isActive());
+        Assert::true($this->transaction->isActive());
 
         $state = $this->transaction->commit();
-        self::assertTrue($state);
-        self::assertFalse($this->transaction->isActive());
+        Assert::true($state);
+        Assert::false($this->transaction->isActive());
 
         // not active
         $state = $this->transaction->commit();
-        self::assertTrue($state);
+        Assert::true($state);
 
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
-        self::assertCount(1, $data);
+        Assert::count($data, 1);
     }
 
     /**
-     * @return iterable<non-empty-string[]>
+     * Non-parameterized DDL case.
+     *
+     * Testo's coverage bridge does not attribute per-line coverage to
+     * #[DataProvider] methods, so {@see execNotActiveTransaction} is invisible
+     * to Infection and the DDL detection in tryBeginTransaction() would stay
+     * uncovered. This plain test pins the "DDL does not open a transaction"
+     * contract so the preg_match guard is mutation-covered.
+     *
+     * @throws Throwable
+     */
+    public function execSchemaQueryNotActiveTransaction(): void
+    {
+        // default: false
+        Assert::false($this->transaction->isActive());
+
+        $this->transaction->exec(
+            'CREATE TABLE IF NOT EXISTS test (name TEXT PRIMARY KEY, version INTEGER DEFAULT 0, atime TEXT)'
+        );
+
+        // statement CREATE TABLE: still not active, DDL must not open a transaction
+        Assert::false($this->transaction->isActive());
+
+        $state = $this->transaction->commit();
+        Assert::true($state);
+    }
+
+    /**
+     * @return iterable<non-empty-string, non-empty-string[]>
      */
     public static function additionSchemaQuery(): iterable
     {
-        yield ['CREATE TABLE IF NOT EXISTS test (name TEXT PRIMARY KEY, version INTEGER DEFAULT 0, atime TEXT)'];
-        yield ['ALTER TABLE migration ADD COLUMN test TEXT DEFAULT NULL'];
-        yield ['CREATE UNIQUE INDEX IF NOT EXISTS `UI_migration_name` ON migration (name)'];
-        yield ['DROP INDEX IF EXISTS `UI_migration_name`'];
-        yield ['DROP TABLE IF EXISTS test'];
+        yield 'create table' => [
+            'CREATE TABLE IF NOT EXISTS test (name TEXT PRIMARY KEY, version INTEGER DEFAULT 0, atime TEXT)',
+        ];
+        yield 'alter table' => ['ALTER TABLE migration ADD COLUMN test TEXT DEFAULT NULL'];
+        yield 'create index' => ['CREATE UNIQUE INDEX IF NOT EXISTS `UI_migration_name` ON migration (name)'];
+        yield 'drop index' => ['DROP INDEX IF EXISTS `UI_migration_name`'];
+        yield 'drop table' => ['DROP TABLE IF EXISTS test'];
     }
 
     /**
@@ -72,17 +103,17 @@ final class StatementMysqlTest extends TestCase
      * @throws Throwable
      */
     #[DataProvider('additionSchemaQuery')]
-    public function testExecNotActiveTransaction(string $query): void
+    public function execNotActiveTransaction(string $query): void
     {
         // default: false
-        self::assertFalse($this->transaction->isActive());
+        Assert::false($this->transaction->isActive());
 
         $this->transaction->exec($query);
 
         // statement CREATE TABLE: false
-        self::assertFalse($this->transaction->isActive());
+        Assert::false($this->transaction->isActive());
 
         $state = $this->transaction->commit();
-        self::assertTrue($state);
+        Assert::true($state);
     }
 }

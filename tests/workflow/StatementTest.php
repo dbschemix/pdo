@@ -4,21 +4,24 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo\tests\workflow;
 
-use Override;
 use Throwable;
 use PDO;
-use PHPUnit\Framework\TestCase;
+use Testo\Assert;
+use Testo\Lifecycle\AfterTest;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 use dbschemix\core\connection\TransactionInterface;
 use dbschemix\pdo\internal\Transaction;
 
-final class StatementTest extends TestCase
+#[Test]
+final class StatementTest
 {
     private PDO $pdo;
 
     private TransactionInterface $transaction;
 
-    #[Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function init(): void
     {
         $this->pdo = new PDO(dsn: 'sqlite::memory:');
         $this->pdo->exec(
@@ -28,8 +31,8 @@ final class StatementTest extends TestCase
         $this->transaction = Transaction::begin($this->pdo);
     }
 
-    #[Override]
-    protected function tearDown(): void
+    #[AfterTest]
+    public function clean(): void
     {
         $this->transaction->rollback();
     }
@@ -37,67 +40,67 @@ final class StatementTest extends TestCase
     /**
      * @throws Throwable
      */
-    public function testExecWithoutParams(): void
+    public function execWithoutParams(): void
     {
         $this->transaction->exec(
             "INSERT INTO migration (name, version, atime) VALUES ('v1', 1, '2026-01-01 00:00:00')"
         );
 
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
-        self::assertCount(1, $data);
-        self::assertArrayHasKey('v1', $data);
+        Assert::count($data, 1);
+        Assert::array($data)->hasKeys('v1');
     }
 
     /**
      * @throws Throwable
      */
-    public function testExecCommitTransaction(): void
+    public function execCommitTransaction(): void
     {
-        self::assertTrue($this->transaction->isActive());
+        Assert::true($this->transaction->isActive());
 
         $this->transaction->exec(
             "INSERT INTO migration (name, version, atime) VALUES ('v1', 1, '2026-01-01 00:00:00')"
         );
 
         $state = $this->transaction->commit();
-        self::assertTrue($state);
-        self::assertFalse($this->transaction->isActive());
+        Assert::true($state);
+        Assert::false($this->transaction->isActive());
 
         // not active
         $state = $this->transaction->commit();
-        self::assertTrue($state);
+        Assert::true($state);
 
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
-        self::assertCount(1, $data);
+        Assert::count($data, 1);
     }
 
     /**
      * @throws Throwable
      */
-    public function testExecRollbackTransaction(): void
+    public function execRollbackTransaction(): void
     {
-        self::assertTrue($this->transaction->isActive());
+        Assert::true($this->transaction->isActive());
 
         $this->transaction->exec(
             "INSERT INTO migration (name, version, atime) VALUES ('v1', 1, '2026-01-01 00:00:00')"
         );
 
         $state = $this->transaction->rollback();
-        self::assertTrue($state);
-        self::assertFalse($this->transaction->isActive());
+        Assert::true($state);
+        Assert::false($this->transaction->isActive());
 
         // not active
         $state = $this->transaction->rollback();
-        self::assertTrue($state);
+        Assert::true($state);
 
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
-        self::assertEmpty($data);
+        Assert::blank($data);
     }
 
     /**
      * @throws Throwable
      */
-    public function testExecWithNamedParams(): void
+    public function execWithNamedParams(): void
     {
         $this->transaction->exec(
             'INSERT INTO migration (name, version, atime) VALUES (:name, :version, :atime)',
@@ -105,9 +108,9 @@ final class StatementTest extends TestCase
         );
 
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
-        self::assertCount(1, $data);
-        self::assertArrayHasKey('202501010000_create_users', $data);
-        self::assertEquals(42, $data['202501010000_create_users']);
+        Assert::count($data, 1);
+        Assert::array($data)->hasKeys('202501010000_create_users');
+        Assert::equals($data['202501010000_create_users'], 42);
     }
 
     /**
@@ -115,7 +118,7 @@ final class StatementTest extends TestCase
      *
      * @throws Throwable
      */
-    public function testExecParamsAreNotInterpolated(): void
+    public function execParamsAreNotInterpolated(): void
     {
         $maliciousName = "'); DROP TABLE migration; --";
 
@@ -125,14 +128,14 @@ final class StatementTest extends TestCase
         );
 
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
-        self::assertCount(1, $data);
-        self::assertArrayHasKey($maliciousName, $data);
+        Assert::count($data, 1);
+        Assert::array($data)->hasKeys($maliciousName);
     }
 
     /**
      * @throws Throwable
      */
-    public function testExecMultipleRowsWithParams(): void
+    public function execMultipleRowsWithParams(): void
     {
         $rows = [
             ['name' => '202501010000_first', 'version' => 1, 'atime' => '2026-01-01 00:00:00'],
@@ -148,16 +151,16 @@ final class StatementTest extends TestCase
         }
 
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
-        self::assertCount(3, $data);
-        self::assertEquals(1, $data['202501010000_first']);
-        self::assertEquals(2, $data['202501010001_second']);
-        self::assertEquals(3, $data['202501010002_third']);
+        Assert::count($data, 3);
+        Assert::equals($data['202501010000_first'], 1);
+        Assert::equals($data['202501010001_second'], 2);
+        Assert::equals($data['202501010002_third'], 3);
     }
 
     /**
      * @throws Throwable
      */
-    public function testFetchRecordWithParams(): void
+    public function fetchRecordWithParams(): void
     {
         $this->pdo->exec("INSERT INTO migration (name, version, atime) VALUES ('v1', 10, '2026-01-01 00:00:00')");
         $this->pdo->exec("INSERT INTO migration (name, version, atime) VALUES ('v2', 20, '2026-01-02 00:00:00')");
@@ -168,16 +171,15 @@ final class StatementTest extends TestCase
             ['version' => 10],
         );
 
-        self::assertCount(2, $data);
-        self::assertArrayHasKey('v1', $data);
-        self::assertArrayHasKey('v3', $data);
-        self::assertArrayNotHasKey('v2', $data);
+        Assert::count($data, 2);
+        Assert::array($data)->hasKeys('v1', 'v3');
+        Assert::array($data)->doesNotHaveKeys('v2');
     }
 
     /**
      * @throws Throwable
      */
-    public function testFetchRecordWithParamsNoMatch(): void
+    public function fetchRecordWithParamsNoMatch(): void
     {
         $this->pdo->exec("INSERT INTO migration (name, version, atime) VALUES ('v1', 1, '2026-01-01 00:00:00')");
 
@@ -186,6 +188,6 @@ final class StatementTest extends TestCase
             ['version' => 999],
         );
 
-        self::assertEmpty($data);
+        Assert::blank($data);
     }
 }

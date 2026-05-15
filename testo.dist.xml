@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Placeholder for Infection's TestFrameworkConfigLocator.
+
+  Infection (Factory.php) eagerly calls configLocator->locate('testo'),
+  which only accepts xml/yml/dist filenames and would otherwise throw
+  FileOrDirectoryNotFound because Testo's real config lives in testo.php.
+
+  testo/bridge-infection discards the located path entirely; the actual
+  Testo configuration is testo.php. This file only needs to exist.
+-->
+<testo/>

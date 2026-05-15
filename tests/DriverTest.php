@@ -4,66 +4,69 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo\tests;
 
-use PHPUnit\Framework\TestCase;
+use Testo\Assert;
+use Testo\Expect;
+use Testo\Test;
 use dbschemix\core\exception\ConfigurationException;
 use dbschemix\pdo\Driver;
 
-final class DriverTest extends TestCase
+#[Test]
+final class DriverTest
 {
-    public function testTypeDriver(): void
+    public function typeDriver(): void
     {
         $driver = new Driver(
             dsn: 'pgsql:host=postgres;port=5432;dbname=main',
         );
 
-        self::assertEquals('pgsql', $driver->getName());
-        self::assertEquals('main', $driver->getSourceName());
+        Assert::same($driver->getName(), 'pgsql');
+        Assert::same($driver->getSourceName(), 'main');
 
         $driver = new Driver(
             dsn: 'MYSQL:host=mysql;dbname=copyDb',
         );
 
-        self::assertEquals('mysql', $driver->getName());
-        self::assertEquals('copydb', $driver->getSourceName());
+        Assert::same($driver->getName(), 'mysql');
+        Assert::same($driver->getSourceName(), 'copydb');
 
         $driver = new Driver(
             dsn: 'sqlite::memory:',
         );
 
-        self::assertEquals('sqlite', $driver->getName());
-        self::assertEquals('memory', $driver->getSourceName());
+        Assert::same($driver->getName(), 'sqlite');
+        Assert::same($driver->getSourceName(), 'memory');
 
         $driver = new Driver(
             dsn: 'sqlite:tests/data/sqlite/db.sqlite3',
         );
 
-        self::assertEquals('sqlite', $driver->getName());
-        self::assertEquals('db', $driver->getSourceName());
+        Assert::same($driver->getName(), 'sqlite');
+        Assert::same($driver->getSourceName(), 'db');
     }
 
-    public function testConfigurationException(): void
+    public function configurationException(): void
     {
-        $this->expectException(ConfigurationException::class);
+        Expect::exception(ConfigurationException::class);
 
         new Driver(
             dsn: 'unknown:',
         );
     }
 
-    public function testDSNConfigurationException(): void
+    public function dsnConfigurationException(): void
     {
-        $this->expectException(ConfigurationException::class);
-        $this->expectExceptionMessage('PDODriver: dsn is incorrect.');
+        Expect::exception(ConfigurationException::class)
+            ->withMessage('PDODriver: dsn is incorrect.');
 
         new Driver(
             dsn: 'mysql::memory:',
         );
     }
 
-    public function testDSNEmptyConfigurationException(): void
+    public function dsnEmptyConfigurationException(): void
     {
-        $this->expectException(ConfigurationException::class);
-        $this->expectExceptionMessage('PDODriver: dsn is incorrect.');
+        Expect::exception(ConfigurationException::class)
+            ->withMessage('PDODriver: dsn is incorrect.');
 
         new Driver(
             dsn: 'sqlite:',

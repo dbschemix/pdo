@@ -4,25 +4,28 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo\tests\workflow;
 
-use Override;
 use Throwable;
-use PHPUnit\Framework\TestCase;
-use dbschemix\pdo\Driver;
-use dbschemix\pdo\tests\MigratorFactory;
+use Testo\Assert;
+use Testo\Expect;
+use Testo\Lifecycle\BeforeTest;
+use Testo\Test;
 use dbschemix\core\command\CommandInterface;
 use dbschemix\core\exception\ActionException;
 use dbschemix\core\Config;
 use dbschemix\core\InputOptions;
 use dbschemix\core\MigratorInterface;
+use dbschemix\pdo\Driver;
+use dbschemix\pdo\tests\MigratorFactory;
 
-final class UpExactlyTest extends TestCase
+#[Test]
+final class UpExactlyTest
 {
     private MigratorInterface $migrator;
 
     private CommandInterface $command;
 
-    #[Override]
-    protected function setUp(): void
+    #[BeforeTest]
+    public function prepare(): void
     {
         $driver = new Driver(
             dsn: 'sqlite::memory:',
@@ -35,19 +38,19 @@ final class UpExactlyTest extends TestCase
     /**
      * @throws Throwable
      */
-    public function testUpExactlyAll(): void
+    public function upExactlyAll(): void
     {
         $this->migrator->init();
         $data = $this->command->fetchApplied();
-        self::assertEmpty($data);
+        Assert::blank($data);
 
         $this->migrator->up(new InputOptions(limit: 1));
         $data = $this->command->fetchApplied();
-        self::assertCount(1, $data);
+        Assert::count($data, 1);
 
         $this->migrator->down();
         $data = $this->command->fetchApplied();
-        self::assertEmpty($data);
+        Assert::blank($data);
 
         try {
             $this->migrator->up();
@@ -56,11 +59,11 @@ final class UpExactlyTest extends TestCase
 
         // только первая миграция успешно
         $data = $this->command->fetchApplied();
-        self::assertCount(1, $data);
+        Assert::count($data, 1);
 
         $this->migrator->down();
         $data = $this->command->fetchApplied();
-        self::assertEmpty($data);
+        Assert::blank($data);
 
         try {
             $this->migrator->up(new InputOptions(exactlyAll: true));
@@ -69,17 +72,15 @@ final class UpExactlyTest extends TestCase
 
         // всё или ничего
         $data = $this->command->fetchApplied();
-        self::assertEmpty($data);
+        Assert::blank($data);
     }
 
-    public function testUpExactlyAllException(): void
+    public function upExactlyAllException(): void
     {
         $this->migrator->init();
 
-        $this->expectException(ActionException::class);
-        $this->expectExceptionMessage(
-            'SQLSTATE[HY000]: General error: 1 no such table:'
-        );
+        Expect::exception(ActionException::class)
+            ->withMessageContaining('SQLSTATE[HY000]: General error: 1 no such table:');
 
         $this->migrator->up(new InputOptions(exactlyAll: true));
     }
@@ -87,15 +88,15 @@ final class UpExactlyTest extends TestCase
     /**
      * @throws Throwable
      */
-    public function testVerify(): void
+    public function verify(): void
     {
         $this->migrator->init();
         $data = $this->command->fetchApplied();
-        self::assertEmpty($data);
+        Assert::blank($data);
 
         $this->migrator->up(new InputOptions(limit: 1));
         $data = $this->command->fetchApplied();
-        self::assertCount(1, $data);
+        Assert::count($data, 1);
 
         // точность версионирования
         usleep(10_000);
@@ -107,17 +108,15 @@ final class UpExactlyTest extends TestCase
 
         // только первая миграция успешно
         $data = $this->command->fetchApplied();
-        self::assertCount(1, $data);
+        Assert::count($data, 1);
     }
 
-    public function testVerifyException(): void
+    public function verifyException(): void
     {
         $this->migrator->init();
 
-        $this->expectException(ActionException::class);
-        $this->expectExceptionMessage(
-            'SQLSTATE[HY000]: General error: 1 no such table:'
-        );
+        Expect::exception(ActionException::class)
+            ->withMessageContaining('SQLSTATE[HY000]: General error: 1 no such table:');
 
         $this->migrator->verify();
     }
