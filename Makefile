@@ -41,10 +41,10 @@ phpstan: ## phpstan
 		ghcr.io/kuaukutsu/php:${PHP_VERSION}-cli \
 		./vendor/bin/phpstan analyse -c phpstan.neon
 
-phpunit: ## phpunit
+testo: ## testo
 	$(DOCKER_RUN) \
 		ghcr.io/kuaukutsu/php:${PHP_VERSION}-cli \
-		./vendor/bin/phpunit
+		./vendor/bin/testo
 
 phpcs: ## php code snifferphp: detect violations of a defined coding standard
 	$(DOCKER_RUN) \
@@ -78,11 +78,13 @@ infection:
 		--target tests \
 		-t app_cli .docker/php/cli
 	- docker run --init -it --rm \
-		--add-host=host.docker.internal:host-gateway \
 		-u $(USER) \
 		-v "$$(pwd):/app" \
 		-w /app \
-		app_cli ./vendor/bin/infection
+		app_cli ./vendor/bin/infection \
+			--coverage=/app/runtime/coverage \
+			--threads=max \
+			--skip-initial-tests
 	docker image rm -f app_cli
 
 tests:
@@ -93,17 +95,12 @@ tests:
 		--target tests \
 		-t app_cli .docker/php/cli
 	- docker run --init -it --rm \
-		--add-host=host.docker.internal:host-gateway \
 		-u $(USER) \
 		-v "$$(pwd):/app" \
 		-w /app \
-		app_cli ./vendor/bin/phpunit \
-			--configuration phpunit.xml.dist \
-			--coverage-xml=/app/runtime/coverage/coverage-xml \
-			--coverage-clover=/app/runtime/coverage/clover.xml \
-			--log-junit=/app/runtime/coverage/phpunit.junit.xml
+		app_cli ./vendor/bin/testo \
+			--coverage --log-junit=/app/runtime/coverage/junit.xml
 	- docker run --init -it --rm \
-		--add-host=host.docker.internal:host-gateway \
 		-u $(USER) \
 		-v "$$(pwd):/app" \
 		-w /app \
@@ -119,3 +116,10 @@ app:
 	$(DOCKER_RUN) -w /app/example \
  		ghcr.io/kuaukutsu/php:${PHP_VERSION}-cli \
  		sh -l
+
+## AI
+-include .claude/Makefile
+
+# Спец-правило, чтобы Makefile не ругался на неизвестные команды (аргументы)
+%:
+	@:
