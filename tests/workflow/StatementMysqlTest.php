@@ -12,7 +12,7 @@ use Testo\Lifecycle\BeforeTest;
 use Testo\Test;
 use dbschemix\core\connection\TransactionInterface;
 use dbschemix\pdo\internal\Connection;
-use dbschemix\pdo\Type;
+use dbschemix\pdo\internal\TransactionMysql;
 
 #[Test]
 final class StatementMysqlTest
@@ -27,7 +27,7 @@ final class StatementMysqlTest
             'CREATE TABLE migration (name TEXT PRIMARY KEY, version INTEGER DEFAULT 0, atime TEXT)'
         );
 
-        $this->transaction = (new Connection($pdo, Type::PDO_MYSQL))->beginTransaction();
+        $this->transaction = (new Connection($pdo, TransactionMysql::class))->beginTransaction();
     }
 
     /**

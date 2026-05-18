@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo;
 
-use dbschemix\pdo\internal\FactoryTransaction;
-use dbschemix\pdo\internal\Transaction;
-use dbschemix\pdo\internal\TransactionMysql;
-
 /**
  * @api
  */
@@ -30,17 +26,5 @@ enum Type
          * @var non-empty-lowercase-string
          */
         return strtolower($db);
-    }
-
-    /**
-     * @return class-string<FactoryTransaction>
-     */
-    public function makeFactoryTransaction(): string
-    {
-        if ($this === self::PDO_MYSQL) {
-            return TransactionMysql::class;
-        }
-
-        return Transaction::class;
     }
 }
