@@ -10,12 +10,16 @@ use PDO;
 use PDOException;
 use OutOfBoundsException;
 use dbschemix\core\command\Command;
+use dbschemix\core\command\CommandInterface;
 use dbschemix\core\connection\ConnectionInterface;
 use dbschemix\core\connection\DriverInterface;
 use dbschemix\core\exception\ConfigurationException;
 use dbschemix\core\exception\ConnectionException;
 use dbschemix\core\Config;
 use dbschemix\pdo\internal\Connection;
+use dbschemix\pdo\internal\FactoryTransaction;
+use dbschemix\pdo\internal\Transaction;
+use dbschemix\pdo\internal\TransactionMysql;
 
 use function dbschemix\core\internal\get_package_path;
 
@@ -84,7 +88,7 @@ final class Driver implements DriverInterface
     }
 
     #[Override]
-    public function makeCommand(Config $config): Command
+    public function makeCommand(Config $config): CommandInterface
     {
         return new Command($this->makeConnection(), $config);
     }
@@ -106,7 +110,7 @@ final class Driver implements DriverInterface
             try {
                 return $this->connectionInstance = new Connection(
                     ($this->connectionFactory)(),
-                    $this->type,
+                    $this->makeFactoryTransaction(),
                 );
             } catch (PDOException $exception) {
                 throw new ConnectionException($this, $exception);
@@ -115,9 +119,25 @@ final class Driver implements DriverInterface
 
         return $this->connectionInstance;
     }
+
+    /**
+     * Composition root: picks the transaction factory for the resolved dialect.
+     *
+     * @infection-ignore-all
+     * @return class-string<FactoryTransaction>
+     */
+    private function makeFactoryTransaction(): string
+    {
+        if ($this->type === Type::PDO_MYSQL) {
+            return TransactionMysql::class;
+        }
+
+        return Transaction::class;
+    }
 }
 
 /**
+ * @internal
  * @return array{0: Type, 1: non-empty-lowercase-string}
  * @throws ConfigurationException
  */

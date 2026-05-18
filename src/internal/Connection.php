@@ -8,7 +8,6 @@ use Override;
 use PDO;
 use dbschemix\core\connection\ConnectionInterface;
 use dbschemix\core\connection\TransactionInterface;
-use dbschemix\pdo\Type;
 
 /**
  * @psalm-internal dbschemix\pdo
@@ -17,17 +16,19 @@ final readonly class Connection implements ConnectionInterface
 {
     use ThrowPrepareException;
 
+    /**
+     * @param class-string<FactoryTransaction> $factoryTransaction
+     */
     public function __construct(
         private PDO $connection,
-        private Type $driverType,
+        private string $factoryTransaction,
     ) {
     }
 
     #[Override]
     public function beginTransaction(): TransactionInterface
     {
-        $class = $this->driverType->makeFactoryTransaction();
-        return $class::begin($this->connection);
+        return ($this->factoryTransaction)::begin($this->connection);
     }
 
     #[Override]
