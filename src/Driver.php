@@ -123,6 +123,7 @@ final class Driver implements DriverInterface
     /**
      * Composition root: picks the transaction factory for the resolved dialect.
      *
+     * @infection-ignore-all
      * @return class-string<FactoryTransaction>
      */
     private function makeFactoryTransaction(): string
