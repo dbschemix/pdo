@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo\internal;
 
+use Override;
 use PDO;
 use dbschemix\core\connection\StatementInterface;
 
@@ -20,7 +21,7 @@ abstract class Statement implements StatementInterface
     ) {
     }
 
-    #[\Override]
+    #[Override]
     public function fetchRecord(string $query, array $params = []): array
     {
         $statement = $this->connection->prepare($query);
@@ -38,7 +39,7 @@ abstract class Statement implements StatementInterface
         return [];
     }
 
-    #[\Override]
+    #[Override]
     public function exec(string $query, array $params = []): void
     {
         if ($params === []) {

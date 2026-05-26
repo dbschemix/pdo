@@ -13,6 +13,8 @@ enum Type
 
     case PDO_MYSQL;
 
+    case PDO_MSSQL;
+
     case PDO_SQLITE;
 
     /**
@@ -20,11 +22,9 @@ enum Type
      */
     public function value(): string
     {
-        [, $db] = explode('_', $this->name);
-
         /**
          * @var non-empty-lowercase-string
          */
-        return strtolower($db);
+        return strtolower(substr($this->name, 4));
     }
 }
