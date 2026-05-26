@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo\internal;
 
+use Override;
 use Stringable;
 
 /**
@@ -25,15 +26,7 @@ final readonly class ErrorInfo implements Stringable
         $this->message = sprintf('SQLSTATE[%s]: error: %s', $errorInfo[0], $errorInfo[2]);
     }
 
-    /**
-     * @return non-empty-string
-     */
-    public function getMessage(): string
-    {
-        return $this->message;
-    }
-
-    #[\Override]
+    #[Override]
     public function __toString(): string
     {
         return $this->message;

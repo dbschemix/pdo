@@ -33,7 +33,10 @@
         </properties>
     </rule>
     <!-- https://github.com/slevomat/coding-standard/blob/master/doc/classes.md -->
-    <rule ref="SlevomatCodingStandard.Classes.RequireAbstractOrFinal"/>
+    <rule ref="SlevomatCodingStandard.Classes.RequireAbstractOrFinal">
+        <!-- @api classes live directly in src/ and may be open for extension by consumers -->
+        <exclude-pattern>src/*.php</exclude-pattern>
+    </rule>
     <rule ref="SlevomatCodingStandard.Classes.ClassConstantVisibility"/>
     <rule ref="SlevomatCodingStandard.Classes.ModernClassNameReference"/>
     <rule ref="SlevomatCodingStandard.Classes.UselessLateStaticBinding"/>

@@ -26,7 +26,7 @@ use function dbschemix\core\internal\get_package_path;
 /**
  * @api
  */
-final class Driver implements DriverInterface
+class Driver implements DriverInterface
 {
     /**
      * @var Closure():PDO
@@ -102,8 +102,8 @@ final class Driver implements DriverInterface
         $timeout = 300;
 
         /**
-         * @note если вдруг экземпляр класса Migrator будет использоваться как сервис, то переиспользуем коннект.
-         * Но с ограничением по времени, долго держать в памяти не будем.
+         * @note if a Migrator instance is used as a long-lived service, reuse the connection.
+         * Capped by a TTL so we do not hold it in memory indefinitely.
          */
         if (!$this->connectionInstance instanceof Connection || $this->connectionTimer < time()) {
             $this->connectionTimer = time() + $timeout;
