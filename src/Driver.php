@@ -21,7 +21,7 @@ use dbschemix\pdo\internal\FactoryTransaction;
 use dbschemix\pdo\internal\Transaction;
 use dbschemix\pdo\internal\TransactionMysql;
 
-use function dbschemix\core\internal\get_package_path;
+use function dbschemix\core\package\path;
 
 /**
  * @api
@@ -83,7 +83,7 @@ final class Driver implements DriverInterface
     #[Override]
     public function getSetupPath(): string
     {
-        return get_package_path('dbschemix/core')
+        return path('dbschemix/core')
             . sprintf('/src/connection/%s/migration/', $this->type->value());
     }
 

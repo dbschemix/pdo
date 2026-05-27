@@ -16,7 +16,7 @@
   "require": {
     "php": "^8.3",
     "ext-pdo": "*",
-    "dbschemix/core": "^1.0"
+    "dbschemix/core": "^1.1"
   },
   "require-dev": {
     "buggregator/trap": "^1.15",
