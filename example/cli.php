@@ -18,8 +18,6 @@ use dbschemix\core\Migration;
 use dbschemix\core\Migrator;
 use dbschemix\core\MigratorInterface;
 
-use function dbschemix\core\internal\get_package_path;
-
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $container = new Container(
