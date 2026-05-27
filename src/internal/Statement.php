@@ -43,7 +43,10 @@ abstract class Statement implements StatementInterface
     public function exec(string $query, array $params = []): void
     {
         if ($params === []) {
-            $this->connection->exec($query);
+            if ($this->connection->exec($query) === false) {
+                $this->prepareException($this->connection);
+            }
+
             return;
         }
 
@@ -52,6 +55,7 @@ abstract class Statement implements StatementInterface
             $this->prepareException($this->connection);
         }
 
+        // $statement->execute() throws under PDO::ERRMODE_EXCEPTION (PHP 8 default).
         $statement->execute($params);
     }
 }

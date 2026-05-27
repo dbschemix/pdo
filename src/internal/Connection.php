@@ -53,7 +53,10 @@ final readonly class Connection implements ConnectionInterface
     public function exec(string $query, array $params = []): void
     {
         if ($params === []) {
-            $this->connection->exec($query);
+            if ($this->connection->exec($query) === false) {
+                $this->prepareException($this->connection);
+            }
+
             return;
         }
 
@@ -62,6 +65,7 @@ final readonly class Connection implements ConnectionInterface
             $this->prepareException($this->connection);
         }
 
+        // $statement->execute() throws under PDO::ERRMODE_EXCEPTION (PHP 8 default).
         $statement->execute($params);
     }
 }

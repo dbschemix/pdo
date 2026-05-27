@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace dbschemix\pdo\tests\workflow;
 
-// Note: the branch `return []` in fetchRecord (when execute() returns false) and the
-// `$this->prepareException()` branch are not reachable through a real in-memory SQLite
-// PDO handle under normal conditions. These two edges are therefore intentionally left
-// without direct coverage here, consistent with the strategy used across this test suite.
+// Note: the `return []` branch in fetchRecord() (when execute() returns false) and its
+// `prepareException()` branch (when prepare() returns false) are not reachable through an
+// in-memory SQLite PDO handle under the default ERRMODE_EXCEPTION, and are intentionally
+// left without direct coverage here.
 
 use Throwable;
 use PDO;
 use Testo\Assert;
+use Testo\Expect;
 use Testo\Lifecycle\BeforeTest;
 use Testo\Test;
+use dbschemix\core\exception\PrepareException;
 use dbschemix\pdo\internal\Connection;
 use dbschemix\pdo\internal\Transaction;
 
@@ -145,6 +147,25 @@ final class ConnectionTest
         );
 
         Assert::blank($data);
+    }
+
+    /**
+     * exec() without params raises PrepareException when the underlying PDO::exec()
+     * returns false. Forces the failure by switching the handle to ERRMODE_SILENT and
+     * passing syntactically invalid SQL.
+     *
+     * @throws Throwable
+     */
+    public function execRaisesPrepareExceptionOnFailure(): void
+    {
+        Expect::exception(PrepareException::class);
+
+        $pdo = new PDO(dsn: 'sqlite::memory:', options: [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+        ]);
+        $connection = new Connection($pdo, Transaction::class);
+
+        $connection->exec('THIS IS NOT VALID SQL');
     }
 
     /**
