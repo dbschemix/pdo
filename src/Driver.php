@@ -26,7 +26,7 @@ use function dbschemix\core\internal\get_package_path;
 /**
  * @api
  */
-class Driver implements DriverInterface
+final class Driver implements DriverInterface
 {
     /**
      * @var Closure():PDO
