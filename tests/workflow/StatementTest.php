@@ -7,10 +7,12 @@ namespace dbschemix\pdo\tests\workflow;
 use Throwable;
 use PDO;
 use Testo\Assert;
+use Testo\Expect;
 use Testo\Lifecycle\AfterTest;
 use Testo\Lifecycle\BeforeTest;
 use Testo\Test;
 use dbschemix\core\connection\TransactionInterface;
+use dbschemix\core\exception\PrepareException;
 use dbschemix\pdo\internal\Transaction;
 
 #[Test]
@@ -130,6 +132,29 @@ final class StatementTest
         $data = $this->transaction->fetchRecord('SELECT name, version FROM migration');
         Assert::count($data, 1);
         Assert::array($data)->hasKeys($maliciousName);
+    }
+
+    /**
+     * exec() without params raises PrepareException when the underlying PDO::exec()
+     * returns false. Forces the failure by switching the handle to ERRMODE_SILENT and
+     * passing syntactically invalid SQL.
+     *
+     * @throws Throwable
+     */
+    public function execRaisesPrepareExceptionOnFailure(): void
+    {
+        // Pattern locks the ErrorInfo format: SQLSTATE (non-numeric token) and a non-empty
+        // multi-word driver message — keeps the assertion stable across libsqlite versions
+        // while still distinguishing $errorInfo[0]/[1]/[2] should those indices be swapped.
+        Expect::exception(PrepareException::class)
+            ->withMessagePattern('/^SQLSTATE\[[A-Z]\w+\]: error: .+ .+/');
+
+        $pdo = new PDO(dsn: 'sqlite::memory:', options: [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+        ]);
+        $transaction = Transaction::begin($pdo);
+
+        $transaction->exec('THIS IS NOT VALID SQL');
     }
 
     /**
