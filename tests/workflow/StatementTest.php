@@ -143,7 +143,11 @@ final class StatementTest
      */
     public function execRaisesPrepareExceptionOnFailure(): void
     {
-        Expect::exception(PrepareException::class);
+        // Pattern locks the ErrorInfo format: SQLSTATE (non-numeric token) and a non-empty
+        // multi-word driver message — keeps the assertion stable across libsqlite versions
+        // while still distinguishing $errorInfo[0]/[1]/[2] should those indices be swapped.
+        Expect::exception(PrepareException::class)
+            ->withMessagePattern('/^SQLSTATE\[[A-Z]\w+\]: error: .+ .+/');
 
         $pdo = new PDO(dsn: 'sqlite::memory:', options: [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
